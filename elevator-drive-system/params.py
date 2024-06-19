@@ -1,6 +1,6 @@
 import math
 
-PARAM_DT = 5e-6 # s
+PARAM_DT = 10e-6 # s
 
 PARAM_RECTIFIER_V_BUS = 200.0 # V
 
