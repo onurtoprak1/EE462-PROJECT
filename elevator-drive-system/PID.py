@@ -21,7 +21,7 @@ class PID:
     def get_error(self):
         return self.prev_error
     
-    def update(self, setpoint:float=None, process_variable:float=None, dt:float=None) -> float:
+    def update(self, feed_forward_term:float = 0, setpoint:float=None, process_variable:float=None, dt:float=None) -> float:
         error = setpoint - process_variable
 
         self.integral += error * dt
@@ -29,7 +29,7 @@ class PID:
 
         derivative = (error - self.prev_error) / dt
 
-        self.output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
+        self.output = feed_forward_term + self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         self.output = self.clamp(self.output, self.OUTPUT_BOUNDS)
 
         self.prev_error = error
