@@ -25,7 +25,7 @@ speed_control_ki = alfa_speed_control*PARAM_DC_MOTOR_TOTAL_VISCOUS_FRICTION/PARA
 speed_control_kd = 0.0
 speed_control_PID = PID(kp=speed_control_kp, ki=speed_control_ki, kd=0.0, output_bounds=(-PARAM_DC_MOTOR_I_RATED, PARAM_DC_MOTOR_I_RATED)) # PID controller for speed, measures speed, sets current
 
-H_bridge_obj = HBridge_Unipolar(Vin_DC=PARAM_RECTIFIER_V_BUS, carrier_magnitude=1, carrier_frequency=1000, v_ref=0)
+H_bridge_obj = HBridge_Unipolar(Vin_DC=PARAM_RECTIFIER_V_BUS, carrier_magnitude=1, carrier_frequency=7500, v_ref=0)
 motor_obj = PMDCMotor(V_rated=PARAM_DC_MOTOR_V_RATED, I_rated=PARAM_DC_MOTOR_I_RATED, R_armature=PARAM_DC_MOTOR_ARMATURE_RESISTANCE, L_armature=PARAM_DC_MOTOR_INDUCTANCE, K_t=PARAM_DC_MOTOR_K_T, K_b=PARAM_DC_MOTOR_K_B,  J_rotor=PARAM_DC_MOTOR_AND_GEARS_J, B_rotor=PARAM_DC_MOTOR_TOTAL_VISCOUS_FRICTION)
 
 time= []
@@ -59,10 +59,10 @@ while t < 15:
     H_bridge_obj.update_vref_for_desired_vout(t=t, desired_voltage_output=voltage_to_apply)
     H_bridge_output_voltage = H_bridge_obj.calculate_Vout(t=t)
 
-    motor_obj.update_armature_current(terminal_voltage=voltage_to_apply, dt=PARAM_DT)
+    motor_obj.update_armature_current(terminal_voltage=H_bridge_output_voltage, dt=PARAM_DT)
     motor_obj.update_rotor_angular_velocity(dt=PARAM_DT, external_refered_load_torque=T_load_referred, external_refered_viscous_friction=PARAM_DC_MOTOR_TOTAL_VISCOUS_FRICTION, external_refered_inertia=cabin_and_cw_reflected_inertia)
     
-    if counter % 500 == 0:
+    if counter % 50 == 0:
         time.append(t)
         rotor_angular_speed.append(motor_obj.get_speed_rad_s())
         rotor_desired_angular_speed.append(w_desired)

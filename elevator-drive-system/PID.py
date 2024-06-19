@@ -21,6 +21,9 @@ class PID:
     def get_error(self):
         return self.prev_error
     
+    def reset_integral(self):
+        self.integral = 0
+    
     def update(self, feed_forward_term:float = 0, setpoint:float=None, process_variable:float=None, dt:float=None) -> float:
         error = setpoint - process_variable
 
