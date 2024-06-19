@@ -15,6 +15,12 @@ class PID:
     def clamp(self, value:float, bounds:tuple):
         return max(bounds[0], min(bounds[1], value))
     
+    def get_integral(self):
+        return self.integral
+    
+    def get_error(self):
+        return self.prev_error
+    
     def update(self, setpoint:float=None, process_variable:float=None, dt:float=None) -> float:
         error = setpoint - process_variable
 
@@ -27,6 +33,7 @@ class PID:
         self.output = self.clamp(self.output, self.OUTPUT_BOUNDS)
 
         self.prev_error = error
+
         return self.output
 
        

@@ -14,12 +14,31 @@ class PMDCMotor:
         self.current = 0
         self.angular_velocity = 0
 
-    def get_speed_rpm(self):
+    def get_speed_rad_s(self)->float:
+        return self.angular_velocity
+    
+    def get_speed_rpm(self)->float:
         return (self.angular_velocity/ (2 * 3.14159)) * 60
     
-    def get_current(self):
+    def get_current(self)->float:
         return self.current
     
+    def update_armature_current(self, terminal_voltage:float = None, dt:float = None) ->float:
+        v_resistor = self.current * self.R_ARMATURE
+        v_back_emf = self.K_B * self.angular_velocity
+        v_inductor = terminal_voltage - v_resistor - v_back_emf
+
+        self.current += (v_inductor / self.L_ARMATURE) * dt
+        return self.current
+    
+    def update_rotor_angular_velocity(self, dt:float=None, external_refered_load_torque:float = 0, external_refered_viscous_friction:float = 0, external_refered_inertia:float=0) -> float:
+        T_em = self.K_T * self.current
+
+        net_torque = T_em - external_refered_load_torque - (self.B_ROTOR + external_refered_viscous_friction )* self.angular_velocity
+        net_acceleration = net_torque / (self.J_ROTOR+external_refered_inertia)
+
+        self.angular_velocity += net_acceleration*dt
+
     
 
 
