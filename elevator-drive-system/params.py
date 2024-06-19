@@ -1,6 +1,7 @@
 import math
 
-TEST_PARAM_SPEED_REF = 50 # rad/s
+PARAM_CW_MASS = 1250 # kg
+PARAM_CABIN_EMPTY_MASS = 1000 # kg
 
 PARAM_DT = 1e-6 # s
 
@@ -25,11 +26,11 @@ PARAM_DC_MOTOR_CURRENT_CONTROL_Ki = alfa_current_control*PARAM_DC_MOTOR_ARMATURE
 PARAM_DC_MOTOR_CURRENT_CONTROL_OUTPUT_BOUNDS = (-PARAM_DC_MOTOR_V_RATED, PARAM_DC_MOTOR_V_RATED) # Voltage bound is the rated voltage
 
 # Calculate the speed control gains
-dc_motor_reflected_inertia = PARAM_DC_MOTOR_AND_GEARS_J #TODO: Add the inertia of the load
+dc_motor_reflected_inertia = 1.0 # reflected inertia of the CW and Cabin
 dc_motor_reflected_viscous_friction = PARAM_DC_MOTOR_VISCOUS_FRICTION #TODO: Add the damping of the load
 
 PARAM_DC_MOTOR_SPEED_CONTROL_RISE_TIME = 5*PARAM_DC_MOTOR_CURRENT_CONTROL_RISE_TIME
 alfa_speed_control = math.log(9)/PARAM_DC_MOTOR_SPEED_CONTROL_RISE_TIME
-PARAM_DC_MOTOR_SPEED_CONTROL_Kp = alfa_speed_control*dc_motor_reflected_inertia/PARAM_DC_MOTOR_K_T
+PARAM_DC_MOTOR_SPEED_CONTROL_Kp = alfa_speed_control*(dc_motor_reflected_inertia+PARAM_DC_MOTOR_AND_GEARS_J)/PARAM_DC_MOTOR_K_T
 PARAM_DC_MOTOR_SPEED_CONTROL_Ki = alfa_speed_control*dc_motor_reflected_viscous_friction/PARAM_DC_MOTOR_K_T
 PARAM_DC_MOTOR_SPEED_CONTROL_OUTPUT_BOUNDS = (-PARAM_DC_MOTOR_I_RATED, PARAM_DC_MOTOR_I_RATED) # Current bound is the rated current
