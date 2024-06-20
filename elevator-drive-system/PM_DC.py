@@ -39,6 +39,12 @@ class PMDCMotor:
 
         self.angular_velocity += net_acceleration*dt
 
+
+    def get_torque(self)->float:
+        return self.K_T * self.current
+    
+    def halt_motor(self):
+        self.angular_velocity = 0
     
 
 

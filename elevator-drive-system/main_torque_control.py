@@ -37,6 +37,7 @@ rotor_desired_angular_speed = []
 armature_current = []
 current_reference = []
 elevation = []
+break_torque = []
 
 counter = 0
 t = 0
@@ -47,33 +48,46 @@ class MainController:
         self.ACCELERATION_LIMIT = V_acceleration_limit
         self.ACCELERATION_DURATION =  V_speed_limit/V_acceleration_limit
 
-        self.ACCELERATION_DISTANCE = 0.5*self.SPEED_LIMIT*self.ACCELERATION_LIMIT
+        self.ACCELERATION_DISTANCE = 0.5*self.SPEED_LIMIT*self.ACCELERATION_DURATION
+
 
         self.current_speed_reference = 0  
-        
+        self.last_elevation_difference = 0
 
-    def update_speed_ref(self, current_elevation = None, desired_elevation:float = None, dt:float = None)->float:
+    def update_speed_ref_and_check_for_breaks(self, current_elevation=None, desired_elevation: float = None, dt: float = None)->bool:
         elevation_difference = desired_elevation - current_elevation
 
-        desired_speed_reference = 0
+        # Calculate the desired speed reference based on the distance to the desired elevation
         if abs(elevation_difference) > self.ACCELERATION_DISTANCE:
             desired_speed_reference = self.SPEED_LIMIT
         else:
-            desired_speed_reference = elevation_difference/self.ACCELERATION_DISTANCE*self.SPEED_LIMIT
-        
+            desired_speed_reference = (abs(elevation_difference) / self.ACCELERATION_DISTANCE) * self.SPEED_LIMIT
+
+        # Adjust speed reference direction based on the sign of the elevation difference
         if elevation_difference < 0:
             desired_speed_reference = -desired_speed_reference
 
-        
-        #update speed reference
+        # Smoothly update the current speed reference
         if desired_speed_reference > self.current_speed_reference:
-            self.current_speed_reference += self.ACCELERATION_LIMIT*dt
+            self.current_speed_reference = min(self.current_speed_reference + self.ACCELERATION_LIMIT * dt, desired_speed_reference)
+        elif desired_speed_reference < self.current_speed_reference:
+            self.current_speed_reference = max(self.current_speed_reference - self.ACCELERATION_LIMIT * dt, desired_speed_reference)
+
+        self.last_elevation_difference = elevation_difference
+
+        if abs(elevation_difference) < 0.01:            
+            return True
         else:
-            self.current_speed_reference -= self.ACCELERATION_LIMIT*dt
+            return False
 
 
     def get_speed_reference_v(self):
-        return self.current_speed_reference
+        return self.current_speed_reference   
+    
+
+    
+    def get_elevation_difference(self):
+        return self.last_elevation_difference
     
     
 
@@ -81,23 +95,35 @@ main_controller_obj = MainController(V_acceleration_limit=1, V_speed_limit=2)
 
 while t < PARAM_SIMULATION_TIME:
 
-
-    main_controller_obj.update_speed_ref(current_elevation=cabin_elevation, desired_elevation=5, dt=PARAM_DT)
-    w_desired = PARAM_ELEVATOR_SPEED_TO_ANGULAR_VELOCITY*main_controller_obj.get_speed_reference_v()
-
     cabin_total_mass = PARAM_CABIN_EMPTY_MASS + cabin_load    
     T_load_referred = 0.196* (cabin_total_mass - PARAM_CW_MASS)
-    
-    current_to_apply = speed_control_PID.update(setpoint=w_desired, process_variable=motor_obj.get_speed_rad_s(), dt = PARAM_DT)
+
+    should_break = main_controller_obj.update_speed_ref_and_check_for_breaks(current_elevation=cabin_elevation, desired_elevation=5, dt=PARAM_DT)
+    w_desired = PARAM_ELEVATOR_SPEED_TO_ANGULAR_VELOCITY*main_controller_obj.get_speed_reference_v()
+    if should_break:
+        current_to_apply = 0
+    else:
+       current_to_apply = speed_control_PID.update(setpoint=w_desired, process_variable=motor_obj.get_speed_rad_s(), dt = PARAM_DT)
+
     voltage_to_apply = current_control_PID.update(setpoint=current_to_apply, process_variable=motor_obj.get_current(), dt = PARAM_DT)
     H_bridge_obj.update_vref_for_desired_vout(t=t, desired_voltage_output=voltage_to_apply)
     #voltage_to_apply = H_bridge_obj.calculate_Vout(t=t)
 
     motor_obj.update_armature_current(terminal_voltage=voltage_to_apply, dt=PARAM_DT)
-    motor_obj.update_rotor_angular_velocity(dt=PARAM_DT, external_refered_load_torque=T_load_referred, external_refered_viscous_friction=PARAM_DC_MOTOR_TOTAL_VISCOUS_FRICTION, external_refered_inertia=cabin_and_cw_reflected_inertia)
+    
+    if should_break:
+        motor_obj.halt_motor()
+        
+    else:
+        motor_obj.update_rotor_angular_velocity(dt=PARAM_DT, external_refered_load_torque=T_load_referred, external_refered_viscous_friction=PARAM_DC_MOTOR_TOTAL_VISCOUS_FRICTION, external_refered_inertia=cabin_and_cw_reflected_inertia)
     
     if counter % 25 == 0:
         time.append(t)
+        if should_break:
+            break_torque.append(T_load_referred-motor_obj.get_torque())
+        else:
+            break_torque.append(0)           
+            
         rotor_angular_speed.append(motor_obj.get_speed_rad_s())
         rotor_desired_angular_speed.append(w_desired)
         armature_current.append(motor_obj.get_current())
@@ -132,6 +158,15 @@ plt.xlabel('Time (s)')
 plt.ylabel('Elevation (m)')
 plt.title('Elevation vs Time')
 plt.grid()
+
+plt.figure()
+plt.plot(time, break_torque)
+plt.xlabel('Time (s)')
+plt.ylabel('Break Torque (Nm)')
+plt.title('Break Torque vs Time')
+plt.grid()
+
+
 
 
 
