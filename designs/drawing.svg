@@ -24,9 +24,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.69219276"
-     inkscape:cx="3317.7174"
-     inkscape:cy="639.27279"
+     inkscape:zoom="0.2447271"
+     inkscape:cx="3250.5595"
+     inkscape:cy="300.33454"
      inkscape:window-width="1920"
      inkscape:window-height="991"
      inkscape:window-x="-9"
@@ -1891,7 +1891,10 @@
          id="path5-9" /></g><path
        style="fill:#c44d00;stroke:#000000;stroke-width:2.83465;stroke-dasharray:none;stroke-opacity:1"
        d="m 1959.4726,535.67603 h 487.7882"
-       id="path6-6" /><path
+       id="path6-6"
+       inkscape:export-filename="..\..\..\..\Desktop\462_report\unipolar_switching.svg"
+       inkscape:export-xdpi="150"
+       inkscape:export-ydpi="150" /><path
        style="fill:#c44d00;stroke:#000000;stroke-width:2.83465;stroke-dasharray:none;stroke-opacity:1"
        d="M 1959.9833,451.90927 V 628.12596"
        id="path7-2" /><path
